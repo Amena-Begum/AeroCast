@@ -1,21 +1,19 @@
-// 🕒 Show current time
 function showTime() {
-  document.getElementById("currentTime").innerHTML = new Date().toUTCString();
+  document.getElementById("currentTime").textContent = new Date().toLocaleString();
 }
 showTime();
 setInterval(showTime, 1000);
 
-const apiKey = "5a93ae286e25f285547457a91abe4cc1"; // API key
+const apiKey = "5a93ae286e25f285547457a91abe4cc1";
 
 async function getWeather(city) {
   try {
-    // 1️⃣ Current Weather
     const res = await fetch(
       `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`
     );
     const data = await res.json();
 
-    if (data.cod == "404" || data.cod == "400") {
+    if (data.cod != 200) {
       alert("❌ City not found!");
       return;
     }
@@ -27,7 +25,14 @@ async function getWeather(city) {
     document.getElementById("humidity").textContent = `${data.main.humidity}%`;
     document.getElementById("wind").textContent = `${Math.round(data.wind.speed)} km/h`;
 
-    // 2️⃣ Coordinates for forecast
+    // Change background by condition
+    const condition = data.weather[0].main.toLowerCase();
+    document.body.classList.remove("sunny", "rainy", "cloudy");
+    if (condition.includes("rain")) document.body.classList.add("rainy");
+    else if (condition.includes("cloud")) document.body.classList.add("cloudy");
+    else document.body.classList.add("sunny");
+
+    // Forecast
     const { lat, lon } = data.coord;
     getForecast(lat, lon);
   } catch (err) {
@@ -37,47 +42,38 @@ async function getWeather(city) {
 
 async function getForecast(lat, lon) {
   try {
-    // Use updated forecast API (works on free plan)
     const res = await fetch(
       `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`
     );
     const data = await res.json();
 
-    // 🌤️ Hourly (next 6 intervals = 18 hours)
+    // Hourly Forecast
     const hourlyContainer = document.getElementById("hourlyForecast");
     hourlyContainer.innerHTML = "";
-
     data.list.slice(0, 6).forEach((item) => {
       const time = new Date(item.dt * 1000).getHours();
       const temp = Math.round(item.main.temp);
-      const condition = item.weather[0].main.toLowerCase();
-      const icon =
-        condition.includes("rain") ? "🌧️" :
-        condition.includes("cloud") ? "☁️" :
-        condition.includes("clear") ? "☀️" : "🌤️";
-
+      const icon = item.weather[0].main.includes("Rain") ? "🌧️" :
+                   item.weather[0].main.includes("Cloud") ? "☁️" :
+                   item.weather[0].main.includes("Clear") ? "☀️" : "🌤️";
       const div = document.createElement("div");
       div.className = "hour";
       div.innerHTML = `<p>${time}:00</p><p>${temp}°C</p><p>${icon}</p>`;
       hourlyContainer.appendChild(div);
     });
 
-    // 📅 7-Day Forecast (approx. next 7 × 8 = 56 entries)
+    // Daily Forecast
     const dailyContainer = document.getElementById("dailyForecast");
     dailyContainer.innerHTML = "";
-
     for (let i = 0; i < data.list.length; i += 8) {
       const item = data.list[i];
       const date = new Date(item.dt * 1000);
       const weekday = date.toLocaleDateString("en-US", { weekday: "short" });
       const min = Math.round(item.main.temp_min);
       const max = Math.round(item.main.temp_max);
-      const condition = item.weather[0].main.toLowerCase();
-      const icon =
-        condition.includes("rain") ? "🌧️" :
-        condition.includes("cloud") ? "☁️" :
-        condition.includes("clear") ? "☀️" : "🌤️";
-
+      const icon = item.weather[0].main.includes("Rain") ? "🌧️" :
+                   item.weather[0].main.includes("Cloud") ? "☁️" :
+                   item.weather[0].main.includes("Clear") ? "☀️" : "🌤️";
       const div = document.createElement("div");
       div.className = "day";
       div.innerHTML = `<p>${weekday}</p><p>${icon}</p><p>${min}° / ${max}°</p>`;
@@ -88,16 +84,11 @@ async function getForecast(lat, lon) {
   }
 }
 
-// 🔍 Search
 document.getElementById("searchBtn").addEventListener("click", () => {
   const city = document.getElementById("cityInput").value.trim() || "Dhaka";
   getWeather(city);
 });
 
-// 🌍 Default
-getWeather("Dhaka");
-
-// 🌙 Theme Toggle
 const themeToggle = document.getElementById("themeToggle");
 themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("dark");
@@ -105,3 +96,5 @@ themeToggle.addEventListener("click", () => {
   themeToggle.textContent =
     document.body.classList.contains("dark") ? "🌞" : "🌙";
 });
+
+getWeather("Dhaka");
