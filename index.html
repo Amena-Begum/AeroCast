@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClarityWeather Pro+</title>
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="script.js"></script>
+</head>
+<body class="light">
+  <nav class="navbar glass">
+    <div class="logo">🌤️ ClarityWeather</div>
+    <div class="nav-right">
+      <input type="text" id="cityInput" placeholder="Enter city..." />
+      <button id="searchBtn">Search</button>
+      <button id="themeToggle">🌙</button>
+    </div>
+  </nav>
+
+  <main class="weather-container">
+    <section class="current-weather glass">
+      <h2 id="cityName">Dhaka, Bangladesh</h2>
+      <p id="currentTime"></p>
+      <h1 class="temp" id="temperature">--°C</h1>
+      <p class="condition" id="condition">Loading...</p>
+
+      <div class="extra-info">
+        <p>Feels like: <span id="feelsLike">--°C</span></p>
+        <p>Humidity: <span id="humidity">--%</span></p>
+        <p>Wind: <span id="wind">-- km/h</span></p>
+      </div>
+    </section>
+
+    <section class="forecast-hourly glass">
+      <h3>Hourly Forecast</h3>
+      <div class="hourly" id="hourlyForecast"></div>
+    </section>
+
+    <section class="forecast-daily glass">
+      <h3>7-Day Forecast</h3>
+      <div class="days" id="dailyForecast"></div>
+    </section>
+  </main>
+</body>
+</html>
