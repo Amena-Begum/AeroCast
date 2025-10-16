@@ -5,7 +5,7 @@ function showTime() {
 showTime();
 setInterval(showTime, 1000);
 
-const apiKey = 5a93ae286e25f285547457a91abe4cc1; // ← API Key
+const apiKey = "5a93ae286e25f285547457a91abe4cc1"; // API key
 
 async function getWeather(city) {
   try {
@@ -14,7 +14,8 @@ async function getWeather(city) {
       `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`
     );
     const data = await res.json();
-    if (data.cod === "404") {
+
+    if (data.cod == "404" || data.cod == "400") {
       alert("❌ City not found!");
       return;
     }
@@ -26,65 +27,77 @@ async function getWeather(city) {
     document.getElementById("humidity").textContent = `${data.main.humidity}%`;
     document.getElementById("wind").textContent = `${Math.round(data.wind.speed)} km/h`;
 
-    // 2️⃣ Get coordinates for forecast
+    // 2️⃣ Coordinates for forecast
     const { lat, lon } = data.coord;
     getForecast(lat, lon);
   } catch (err) {
-    console.error("Error:", err);
+    console.error("Error fetching weather:", err);
   }
 }
 
 async function getForecast(lat, lon) {
   try {
+    // Use updated forecast API (works on free plan)
     const res = await fetch(
-      `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&exclude=minutely,alerts&appid=${apiKey}&units=metric`
+      `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`
     );
-    const forecast = await res.json();
+    const data = await res.json();
 
-    // Hourly Forecast (next 6 hours)
+    // 🌤️ Hourly (next 6 intervals = 18 hours)
     const hourlyContainer = document.getElementById("hourlyForecast");
     hourlyContainer.innerHTML = "";
-    forecast.hourly.slice(0, 6).forEach((hour) => {
-      const time = new Date(hour.dt * 1000).getHours();
-      const temp = Math.round(hour.temp);
-      const icon = hour.weather[0].main.toLowerCase().includes("rain") ? "🌧️" :
-                   hour.weather[0].main.toLowerCase().includes("cloud") ? "☁️" :
-                   hour.weather[0].main.toLowerCase().includes("clear") ? "☀️" : "🌤️";
+
+    data.list.slice(0, 6).forEach((item) => {
+      const time = new Date(item.dt * 1000).getHours();
+      const temp = Math.round(item.main.temp);
+      const condition = item.weather[0].main.toLowerCase();
+      const icon =
+        condition.includes("rain") ? "🌧️" :
+        condition.includes("cloud") ? "☁️" :
+        condition.includes("clear") ? "☀️" : "🌤️";
+
       const div = document.createElement("div");
       div.className = "hour";
       div.innerHTML = `<p>${time}:00</p><p>${temp}°C</p><p>${icon}</p>`;
       hourlyContainer.appendChild(div);
     });
 
-    // 7-Day Forecast
+    // 📅 7-Day Forecast (approx. next 7 × 8 = 56 entries)
     const dailyContainer = document.getElementById("dailyForecast");
     dailyContainer.innerHTML = "";
-    forecast.daily.slice(0, 7).forEach((day) => {
-      const date = new Date(day.dt * 1000);
+
+    for (let i = 0; i < data.list.length; i += 8) {
+      const item = data.list[i];
+      const date = new Date(item.dt * 1000);
       const weekday = date.toLocaleDateString("en-US", { weekday: "short" });
-      const min = Math.round(day.temp.min);
-      const max = Math.round(day.temp.max);
-      const icon = day.weather[0].main.toLowerCase().includes("rain") ? "🌧️" :
-                   day.weather[0].main.toLowerCase().includes("cloud") ? "☁️" :
-                   day.weather[0].main.toLowerCase().includes("clear") ? "☀️" : "🌤️";
+      const min = Math.round(item.main.temp_min);
+      const max = Math.round(item.main.temp_max);
+      const condition = item.weather[0].main.toLowerCase();
+      const icon =
+        condition.includes("rain") ? "🌧️" :
+        condition.includes("cloud") ? "☁️" :
+        condition.includes("clear") ? "☀️" : "🌤️";
+
       const div = document.createElement("div");
       div.className = "day";
       div.innerHTML = `<p>${weekday}</p><p>${icon}</p><p>${min}° / ${max}°</p>`;
       dailyContainer.appendChild(div);
-    });
+    }
   } catch (err) {
-    console.error("Forecast error:", err);
+    console.error("Forecast fetch error:", err);
   }
 }
 
+// 🔍 Search
 document.getElementById("searchBtn").addEventListener("click", () => {
   const city = document.getElementById("cityInput").value.trim() || "Dhaka";
   getWeather(city);
 });
 
+// 🌍 Default
 getWeather("Dhaka");
 
-// 🌙 Theme toggle
+// 🌙 Theme Toggle
 const themeToggle = document.getElementById("themeToggle");
 themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("dark");
